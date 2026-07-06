@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapping Exercise 1: Generational Impacts and Effects of Trauma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    /* Brand palette */
+    --purple:#351959;
+    --white:#FFFFFF;
+    --blue-deep:#191998;
+    --blue-grey:#8CA7C9;
+    --cyan-pale:#C2EBEB;
+    --cyan-bright:#00C5FF;
+    --violet:#BA61FF;
+    --teal:#28D2D1;
+
+    /* Semantic roles derived from the palette */
+    --bg:var(--white);
+    --bg-elevated: rgba(140,167,201,0.10);   /* tint of blue-grey */
+    --ink:var(--purple);
+    --ink-soft: rgba(53,25,89,0.72);
+    --ink-faint: rgba(53,25,89,0.48);
+    --line: rgba(53,25,89,0.16);
+    --line-strong: rgba(53,25,89,0.30);
+
+    --accent: var(--cyan-bright);
+    --accent-ink: var(--purple);             /* text on accent buttons */
+    --accent-soft: rgba(0,197,255,0.14);
+    --accent-glow: rgba(0,197,255,0.35);
+
+    --current-glow: rgba(186,97,255,0.35);   /* violet halo for current stop */
+    --done: var(--teal);
+
+    --panel-bg: var(--cyan-pale);
+    --panel-border: rgba(25,25,152,0.25);
+    --panel-label: var(--blue-deep);
+
+    --reassure-bg: rgba(186,97,255,0.10);
+    --reassure-border: rgba(186,97,255,0.35);
+
+    --focus-ring: 0 0 0 3px var(--accent-glow);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:760px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+    min-height:100vh;
+  }
+  @media (max-width:600px){
+    .app{padding:20px 16px 64px;}
+  }
+
+  /* ---------- Road progress ---------- */
+  .road-wrap{
+    position:relative;
+    padding:18px 4px 28px;
+    margin-bottom:8px;
+  }
+  .road-line{
+    position:relative;
+    height:4px;
+    border-radius:2px;
+    background:
+      repeating-linear-gradient(to right,
+        var(--blue-grey) 0px, var(--blue-grey) 14px,
+        transparent 14px, transparent 26px);
+    opacity:0.55;
+  }
+  .road-line-fill{
+    position:absolute;
+    top:0; left:0; height:4px;
+    border-radius:2px;
+    background:linear-gradient(to right, var(--blue-deep), var(--cyan-bright));
+    transition:width 0.5s ease;
+  }
+  .stops{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    margin-top:-8px;
+  }
+  .stop{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--white);
+    border:2px solid var(--blue-grey);
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.35s ease;
+    flex-shrink:0;
+  }
+  .stop.done{
+    background:var(--teal);
+    border-color:var(--teal);
+  }
+  .stop.current{
+    background:var(--white);
+    border-color:var(--cyan-bright);
+    box-shadow:0 0 0 6px var(--accent-soft), 0 0 14px 3px var(--current-glow);
+  }
+  .stop-label{
+    position:absolute;
+    top:22px;
+    font-size:10px;
+    letter-spacing:0.04em;
+    color:var(--ink-faint);
+    white-space:nowrap;
+    transform:translateX(-50%);
+    display:none;
+  }
+  @media (min-width:600px){
+    .stop-label{display:block;}
+  }
+
+  /* ---------- Header ---------- */
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--blue-deep);
+    font-weight:700;
+    margin:28px 0 6px;
+  }
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(26px,4vw,34px);
+    line-height:1.15;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .era-dates{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin-bottom:22px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--bg-elevated);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 22px;
+    margin-bottom:18px;
+  }
+  .card p{margin:0 0 12px; line-height:1.6; font-size:15px; color:var(--ink-soft);}
+  .card p:last-child{margin-bottom:0;}
+  .label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+    font-weight:700;
+    margin-bottom:10px;
+    display:block;
+  }
+  .reflect-list{
+    margin:0; padding-left:18px;
+    color:var(--ink);
+    font-size:15px;
+    line-height:1.7;
+  }
+  .reflect-list li{margin-bottom:4px;}
+
+  .examples-panel{
+    background:var(--panel-bg);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:18px 22px;
+    margin-bottom:18px;
+  }
+  .examples-panel .label{color:var(--panel-label);}
+  .examples-panel ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.65; color:var(--ink);}
+
+  textarea{
+    width:100%;
+    min-height:110px;
+    background:var(--white);
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    padding:14px;
+    resize:vertical;
+    line-height:1.55;
+  }
+  textarea::placeholder{color:var(--ink-faint);}
+  textarea:focus{
+    outline:none;
+    border-color:var(--cyan-bright);
+    box-shadow:var(--focus-ring);
+  }
+
+  .field{margin-bottom:22px;}
+  .field:last-child{margin-bottom:0;}
+
+  /* ---------- Nav buttons ---------- */
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:28px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    border-radius:8px;
+    padding:12px 22px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:transform 0.15s ease, background 0.15s ease;
+  }
+  button:focus-visible{outline:none; box-shadow:var(--focus-ring);}
+  .btn-primary{
+    background:var(--cyan-bright);
+    color:var(--accent-ink);
+  }
+  .btn-primary:hover{transform:translateY(-1px);}
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border-color:var(--line-strong);
+  }
+  .btn-ghost:hover{color:var(--ink); border-color:var(--purple);}
+  .btn-ghost:disabled{opacity:0.35; cursor:default;}
+  .btn-ghost:disabled:hover{color:var(--ink-soft); border-color:var(--line-strong);}
+
+  /* ---------- Intro / final screens ---------- */
+  .intro, .final{
+    padding-top:12px;
+  }
+  .intro h1, .final h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(28px,4.5vw,38px);
+    line-height:1.18;
+    margin:6px 0 18px;
+    color:var(--ink);
+  }
+  .intro p, .final p{line-height:1.65; font-size:15.5px; color:var(--ink-soft);}
+  .reassure{
+    background:var(--reassure-bg);
+    border:1px solid var(--reassure-border);
+    border-radius:10px;
+    padding:16px 18px;
+    font-size:14.5px;
+    color:var(--ink);
+    margin:20px 0 28px;
+  }
+  .summary-list{list-style:none;margin:0 0 28px;padding:0;}
+  .summary-list li{
+    display:flex; align-items:baseline; gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14.5px;
+    color:var(--ink);
+  }
+  .summary-list li:last-child{border-bottom:none;}
+  .summary-list .mark{color:var(--teal); font-weight:700;}
+  .summary-list .muted{color:var(--ink-faint); font-size:13px;}
+
+  .fade{animation:fadeIn 0.35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  @media (prefers-reduced-motion: reduce){
+    .fade{animation:none;}
+    .road-line-fill{transition:none;}
+    button{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const ERAS = [
+  {
+    name: "Early Colonisation",
+    dates: "1788–1838",
+    context: "This era is marked by policies of dispossession and the authorised extermination of Aboriginal peoples. This was justified by the belief that Aboriginal people were of biological and social inferiority.",
+    questions: [
+      "When did European colonisers arrive? How was the region colonised? Was land used for farming? What about the naming of places?",
+      "Outbreak of disease? Introduction of flour, sugar and alcohol?",
+      "Massacres of Aboriginal peoples? What happened to the people who committed these massacres?",
+      "How were any negotiations conducted with Aboriginal peoples?"
+    ],
+    examples: [
+      "Dispossession, loss of land, loss of right to walk freely upon the land and access sacred sites",
+      "Loss of language and cultural continuity",
+      "Nutritional balance upset by introduced foods and impact of farming on hunting and gathering",
+      "Decimation of population by massacres and disease"
+    ]
+  },
+  {
+    name: "Protection & Segregation",
+    dates: "1839–1929",
+    context: "This era is marked by policies of 'protection' and segregation, and included forced removal from ancestral lands and segregation of Aboriginal peoples onto permanent areas such as missions and reserves. In 1883 the NSW Aborigines Protection Board is established. In 1901 Australia becomes a Federation, but the Constitution legislates for any race except Aboriginal peoples – this remains in the power of the States. From 1914, Aboriginal people serve in World War I despite the Defence Act 1909 which prohibits any person not of 'substantially European' origin from serving. Aboriginal soldiers are among Australian troops at Gallipoli. In 1915 the NSW Aborigines Protection Board is empowered to remove and apprentice local Aboriginal people without a court hearing. Every aspect of Aboriginal life is regulated by the state – what food they ate, employment permitted, money spent, who they could marry, what they could read, sport and leisure activities, etc. A national policy of forcible child removal also begins, with the goal of assimilating the Aboriginal population and thereby eradicating Aboriginal cultures and peoples from Australia. Massacres still continued through this period and were largely unpunished.",
+    questions: [
+      "What were the experiences of forced removal from Country in your region? Segregation away from the rest of society? Are there any Missions or Reserves in your region? How were these established, and managed? Were certain areas declared off limits to Aboriginal people?",
+      "What happened with child removal in your region? Where were children who were removed from communities in your area sent to?",
+      "Are you aware of any local sites of massacres of Aboriginal peoples? What happened to the people who committed these massacres?"
+    ],
+    examples: [
+      "Disruption of familial bonds and forcing unrelated groups together",
+      "Aboriginal peoples forced to live in conditions of poverty, overcrowding, and epidemics of disease",
+      "Aboriginal peoples prohibited from practising their culture, spiritual beliefs, ceremonies and languages",
+      "Aboriginal soldiers return from war only to find they are treated with the same prejudice and discrimination as before. Some return to find their wages are stolen, their land is stolen, and their children are stolen",
+      "Loss of trust, sense of belonging and safety",
+      "The beginning of intergenerational trauma from forced removals of children and separation from family",
+      "Self-medicating via alcohol abuse",
+      "Disconnectedness"
+    ]
+  },
+  {
+    name: "Assimilation",
+    dates: "1930–1970",
+    context: "This era is marked by the assimilation policy, the goal of which was the complete 'absorption' of Aboriginal peoples into the European population. Those deemed 'full-bloods' were left on reserves to 'eventually die out'. Those deemed of mixed descent would be forcibly assimilated into white society. There was an expectation that Aboriginal people should disregard their own culture, customs and beliefs, and adopt those of white society. Forcible child removals continued. From 1939, despite not being recognised as citizens, Aboriginal people serve in Europe, the Middle East, the Pacific and New Guinea.",
+    questions: [
+      "What were the experiences of child removal in your region?",
+      "What about connection to culture, community, Country?",
+      "Where were people living and working?",
+      "What were the experiences of access to education and healthcare?"
+    ],
+    examples: [
+      "Subjugation, inequality, disadvantage and poverty",
+      "Ongoing and multi-layered grief and loss from continued removals",
+      "Lateral violence, disunity and lack of cohesion within communities",
+      "Anger and mistrust",
+      "Community and family violence",
+      "Depression and other mental health issues affecting whole communities"
+    ]
+  },
+  {
+    name: "Self-Determination",
+    dates: "1971–1990",
+    context: "This era is marked by the policy of 'self-determination' defined as 'Aboriginal communities deciding the pace and nature of their future development as significant components within a diverse Australia'. This later became 'self-management' which enabled Aboriginal communities to manage government projects and funding at a local level, however in general provided them with little to say in what projects would be created.",
+    questions: [
+      "What were the experiences of self-determination in your local region?",
+      "What about land rights?",
+      "How united is the local community – what about issues of lateral violence?"
+    ],
+    examples: [
+      "Lateral violence",
+      "Drug use becomes an accepted part of growing up",
+      "Contact with the justice system becomes an accepted rite of passage for young people",
+      "Suicide and self-harm behaviours start to emerge"
+    ]
+  },
+  {
+    name: "Reconciliation & The Intervention",
+    dates: "1991–2012",
+    context: "This era is marked by the establishment of the Council for Aboriginal Reconciliation, the Royal Commission into Aboriginal Deaths in Custody, Native Title, the National Inquiry into the Separation of Aboriginal and Torres Strait Islander Children from their Families, the Close the Gap campaign, the Inquiry into the Protection of Aboriginal Children from Sexual Abuse, and the resulting Northern Territory Emergency Response (commonly known as 'The Intervention').",
+    questions: [
+      "What about levels of incarceration, child protection removals, violence?"
+    ],
+    examples: [
+      "Suicide and self-harming behaviours increase and become epidemic in some areas",
+      "Self-medication, substance abuse",
+      "Paternalism within organisations and governance",
+      "Sense of ongoing oppression, lack of opportunity and sense of hopelessness"
+    ]
+  },
+  {
+    name: "Voice. Treaty. Truth.",
+    dates: "Current day",
+    context: "Current issues continue to be racism and discrimination, and ongoing marginalisation and disadvantage. The 2017 'Uluru Statement from the Heart' called on government to establish a 'First Nations Voice' in the Australian Constitution and a 'Makarrata Commission' to supervise a process of 'agreement-making' and 'truth-telling' between governments and Aboriginal and Torres Strait Islander peoples. In 2023, an Indigenous Voice to Parliament referendum was held, and the majority of voters rejected the proposed constitutional change. Australia has still had no single national truth-telling commission, but several jurisdictions have created or progressed formal truth-telling bodies as part of treaty processes, most notably Victoria's Yoorrook Justice Commission. Debates over issues such as changing the date of Australia Day, and the Welcome to Country ceremony generate much racism and hatred in the media.",
+    questions: [
+      "What are the current issues and campaigns in your local region?",
+      "What sort of responses do you see these issues and campaigns get from the non-Indigenous community?",
+      "What incidents of racism are you aware of?"
+    ],
+    examples: [
+      "Exposure to frequent racist debates in the media impact on self-esteem and cultural pride"
+    ]
+  }
+];
+
+const state = {
+  screen: "intro", // intro | era | final
+  eraIndex: 0,
+  answers: ERAS.map(() => ({ impacts: "", effects: "" }))
+};
+
+const app = document.getElementById("app");
+
+function renderRoad(activeIndex){
+  const total = ERAS.length;
+  const pct = activeIndex <= 0 ? 0 : (activeIndex / (total - 1)) * 100;
+  let stops = "";
+  ERAS.forEach((era, i) => {
+    let cls = "stop";
+    if (i < activeIndex) cls += " done";
+    if (i === activeIndex) cls += " current";
+    stops += `<div style="position:relative;">
+      <div class="${cls}"></div>
+      <div class="stop-label">${era.dates.split("–")[0]}</div>
+    </div>`;
+  });
+  return `
+    <div class="road-wrap">
+      <div class="road-line"><div class="road-line-fill" style="width:${pct}%;"></div></div>
+      <div class="stops">${stops}</div>
+    </div>`;
+}
+
+function renderIntro(){
+  app.innerHTML = `
+    <div class="intro fade">
+      ${renderRoad(-1)}
+      <div class="eyebrow">Mapping Exercise 1</div>
+      <h1>The Generational Impacts and Effects of Trauma</h1>
+      <p>This activity gets you to start to consider the generational impacts and effects of local events on Aboriginal and Torres Strait Islander communities in your region, from first contact with Europeans through to current day.</p>
+      <p>It is designed for you to begin to consider how these events may have resulted in unresolved trauma for people in these communities, and how symptoms of this trauma may have shaped their current situation.</p>
+      <div class="reassure">It is perfectly understandable that you may not know much about these events and may struggle to have any information to add. The point of this exercise is that it starts you thinking. It's something you can add to over time.</div>
+      <div class="nav-row" style="justify-content:flex-end;">
+        <button class="btn-primary" onclick="goToEra(0)">Begin →</button>
+      </div>
+    </div>`;
+}
+
+function renderEra(i){
+  const era = ERAS[i];
+  const a = state.answers[i];
+  app.innerHTML = `
+    <div class="era fade">
+      ${renderRoad(i)}
+      <div class="eyebrow">Part ${i+1} of ${ERAS.length}</div>
+      <h1 class="title">${era.name}</h1>
+      <div class="era-dates">${era.dates}</div>
+
+      <div class="card">
+        <p>${era.context}</p>
+        <span class="label">Reflect on</span>
+        <ul class="reflect-list">
+          ${era.questions.map(q => `<li>${q}</li>`).join("")}
+        </ul>
+      </div>
+
+      <div class="field">
+        <span class="label">Your reflection: generational impacts</span>
+        <textarea id="impacts-input" placeholder="What do you know about this era in your region?">${a.impacts}</textarea>
+      </div>
+
+      <div class="examples-panel">
+        <span class="label">Effects on community: examples</span>
+        <ul>${era.examples.map(e => `<li>${e}</li>`).join("")}</ul>
+      </div>
+
+      <div class="field">
+        <span class="label">Your reflection: effects on community</span>
+        <textarea id="effects-input" placeholder="What effects have you seen or heard about in your community?">${a.effects}</textarea>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-ghost" ${i===0 ? "disabled" : ""} onclick="goBack()">← Back</button>
+        <button class="btn-primary" onclick="goNext()">${i === ERAS.length-1 ? "Finish →" : "Next →"}</button>
+      </div>
+    </div>`;
+}
+
+function renderFinal(){
+  app.innerHTML = `
+    <div class="final fade">
+      ${renderRoad(ERAS.length)}
+      <div class="eyebrow">Journey complete</div>
+      <h1>Thank you for completing this exercise.</h1>
+      <p>Here's what you've mapped so far. Download it as a PDF to keep, revisit, or bring to a conversation with your local Elders and community organisations, and remember, this is something you can keep adding to over time.</p>
+      <ul class="summary-list">
+        ${ERAS.map((era, i) => {
+          const a = state.answers[i];
+          const filled = a.impacts.trim() || a.effects.trim();
+          return `<li><span class="mark">${filled ? "✓" : "–"}</span> ${era.name} <span class="muted">(${era.dates})</span></li>`;
+        }).join("")}
+      </ul>
+      <div class="nav-row" style="justify-content:space-between;">
+        <button class="btn-ghost" onclick="goToEra(${ERAS.length - 1})">← Back to edit</button>
+        <button class="btn-primary" onclick="downloadPDF()">Download my reflections (PDF)</button>
+      </div>
+    </div>`;
+}
+
+function saveCurrentInputs(){
+  if (state.screen === "era"){
+    const impactsEl = document.getElementById("impacts-input");
+    const effectsEl = document.getElementById("effects-input");
+    if (impactsEl) state.answers[state.eraIndex].impacts = impactsEl.value;
+    if (effectsEl) state.answers[state.eraIndex].effects = effectsEl.value;
+  }
+}
+
+function goToEra(i){
+  saveCurrentInputs();
+  state.screen = "era";
+  state.eraIndex = i;
+  renderEra(i);
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function goNext(){
+  saveCurrentInputs();
+  if (state.eraIndex < ERAS.length - 1){
+    goToEra(state.eraIndex + 1);
+  } else {
+    state.screen = "final";
+    renderFinal();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+}
+
+function goBack(){
+  saveCurrentInputs();
+  if (state.eraIndex > 0) goToEra(state.eraIndex - 1);
+}
+
+function downloadPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const marginX = 48;
+  let y = 56;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = doc.internal.pageSize.getWidth() - marginX * 2;
+
+  function ensureSpace(lines){
+    if (y + lines * 14 > pageHeight - 48){
+      doc.addPage();
+      y = 56;
+    }
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Mapping Exercise 1: Generational Impacts and Effects of Trauma", marginX, y);
+  y += 26;
+
+  ERAS.forEach((era, i) => {
+    const a = state.answers[i];
+    ensureSpace(3);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text(`${era.name} (${era.dates})`, marginX, y);
+    y += 18;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    ensureSpace(1);
+    doc.text("Reflect on:", marginX, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    era.questions.forEach(q => {
+      const qLines = doc.splitTextToSize(`•  ${q}`, maxWidth);
+      ensureSpace(qLines.length);
+      doc.text(qLines, marginX, y);
+      y += qLines.length * 13 + 2;
+    });
+    y += 6;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    ensureSpace(1);
+    doc.text("Generational impacts: my reflection:", marginX, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    const impactsText = a.impacts.trim() || "(no response entered)";
+    const impactsLines = doc.splitTextToSize(impactsText, maxWidth);
+    ensureSpace(impactsLines.length);
+    doc.text(impactsLines, marginX, y);
+    y += impactsLines.length * 13 + 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    ensureSpace(1);
+    doc.text("Effects on community: my reflection:", marginX, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    const effectsText = a.effects.trim() || "(no response entered)";
+    const effectsLines = doc.splitTextToSize(effectsText, maxWidth);
+    ensureSpace(effectsLines.length);
+    doc.text(effectsLines, marginX, y);
+    y += effectsLines.length * 13 + 24;
+  });
+
+  doc.save("mapping-exercise-1-my-reflections.pdf");
+}
+
+renderIntro();
+</script>
+</body>
+</html>
