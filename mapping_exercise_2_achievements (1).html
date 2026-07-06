@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapping Exercise 2: Generational Achievements and Their Effects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    /* Brand palette */
+    --purple:#351959;
+    --white:#FFFFFF;
+    --blue-deep:#191998;
+    --blue-grey:#8CA7C9;
+    --cyan-pale:#C2EBEB;
+    --cyan-bright:#00C5FF;
+    --violet:#BA61FF;
+    --teal:#28D2D1;
+
+    /* Semantic roles derived from the palette */
+    --bg:var(--white);
+    --bg-elevated: rgba(140,167,201,0.10);   /* tint of blue-grey */
+    --ink:var(--purple);
+    --ink-soft: rgba(53,25,89,0.72);
+    --ink-faint: rgba(53,25,89,0.48);
+    --line: rgba(53,25,89,0.16);
+    --line-strong: rgba(53,25,89,0.30);
+
+    --accent: var(--cyan-bright);
+    --accent-ink: var(--purple);             /* text on accent buttons */
+    --accent-soft: rgba(0,197,255,0.14);
+    --accent-glow: rgba(0,197,255,0.35);
+
+    --current-glow: rgba(186,97,255,0.35);   /* violet halo for current stop */
+    --done: var(--teal);
+
+    --panel-bg: var(--cyan-pale);
+    --panel-border: rgba(25,25,152,0.25);
+    --panel-label: var(--blue-deep);
+
+    --reassure-bg: rgba(186,97,255,0.10);
+    --reassure-border: rgba(186,97,255,0.35);
+
+    --focus-ring: 0 0 0 3px var(--accent-glow);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:760px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+    min-height:100vh;
+  }
+  @media (max-width:600px){
+    .app{padding:20px 16px 64px;}
+  }
+
+  /* ---------- Road progress ---------- */
+  .road-wrap{
+    position:relative;
+    padding:18px 4px 28px;
+    margin-bottom:8px;
+  }
+  .road-line{
+    position:relative;
+    height:4px;
+    border-radius:2px;
+    background:
+      repeating-linear-gradient(to right,
+        var(--blue-grey) 0px, var(--blue-grey) 14px,
+        transparent 14px, transparent 26px);
+    opacity:0.55;
+  }
+  .road-line-fill{
+    position:absolute;
+    top:0; left:0; height:4px;
+    border-radius:2px;
+    background:linear-gradient(to right, var(--blue-deep), var(--cyan-bright));
+    transition:width 0.5s ease;
+  }
+  .stops{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    margin-top:-8px;
+  }
+  .stop{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--white);
+    border:2px solid var(--blue-grey);
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.35s ease;
+    flex-shrink:0;
+  }
+  .stop.done{
+    background:var(--teal);
+    border-color:var(--teal);
+  }
+  .stop.current{
+    background:var(--white);
+    border-color:var(--cyan-bright);
+    box-shadow:0 0 0 6px var(--accent-soft), 0 0 14px 3px var(--current-glow);
+  }
+  .stop-label{
+    position:absolute;
+    top:22px;
+    font-size:10px;
+    letter-spacing:0.04em;
+    color:var(--ink-faint);
+    white-space:nowrap;
+    transform:translateX(-50%);
+    display:none;
+  }
+  @media (min-width:600px){
+    .stop-label{display:block;}
+  }
+
+  /* ---------- Header ---------- */
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--blue-deep);
+    font-weight:700;
+    margin:28px 0 6px;
+  }
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(26px,4vw,34px);
+    line-height:1.15;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .era-dates{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin-bottom:22px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--bg-elevated);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 22px;
+    margin-bottom:18px;
+  }
+  .card p{margin:0 0 12px; line-height:1.6; font-size:15px; color:var(--ink-soft);}
+  .card p:last-child{margin-bottom:0;}
+  .label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+    font-weight:700;
+    margin-bottom:10px;
+    display:block;
+  }
+  .reflect-list{
+    margin:0; padding-left:18px;
+    color:var(--ink);
+    font-size:15px;
+    line-height:1.7;
+  }
+  .reflect-list li{margin-bottom:4px;}
+
+  .examples-panel{
+    background:var(--panel-bg);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:18px 22px;
+    margin-bottom:18px;
+  }
+  .examples-panel .label{color:var(--panel-label);}
+  .examples-panel ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.65; color:var(--ink);}
+
+  textarea{
+    width:100%;
+    min-height:110px;
+    background:var(--white);
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    padding:14px;
+    resize:vertical;
+    line-height:1.55;
+  }
+  textarea::placeholder{color:var(--ink-faint);}
+  textarea:focus{
+    outline:none;
+    border-color:var(--cyan-bright);
+    box-shadow:var(--focus-ring);
+  }
+
+  .field{margin-bottom:22px;}
+  .field:last-child{margin-bottom:0;}
+
+  /* ---------- Nav buttons ---------- */
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:28px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    border-radius:8px;
+    padding:12px 22px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:transform 0.15s ease, background 0.15s ease;
+  }
+  button:focus-visible{outline:none; box-shadow:var(--focus-ring);}
+  .btn-primary{
+    background:var(--cyan-bright);
+    color:var(--accent-ink);
+  }
+  .btn-primary:hover{transform:translateY(-1px);}
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border-color:var(--line-strong);
+  }
+  .btn-ghost:hover{color:var(--ink); border-color:var(--purple);}
+  .btn-ghost:disabled{opacity:0.35; cursor:default;}
+  .btn-ghost:disabled:hover{color:var(--ink-soft); border-color:var(--line-strong);}
+
+  /* ---------- Intro / final screens ---------- */
+  .intro, .final{
+    padding-top:12px;
+  }
+  .intro h1, .final h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(28px,4.5vw,38px);
+    line-height:1.18;
+    margin:6px 0 18px;
+    color:var(--ink);
+  }
+  .intro p, .final p{line-height:1.65; font-size:15.5px; color:var(--ink-soft);}
+  .reassure{
+    background:var(--reassure-bg);
+    border:1px solid var(--reassure-border);
+    border-radius:10px;
+    padding:16px 18px;
+    font-size:14.5px;
+    color:var(--ink);
+    margin:20px 0 28px;
+  }
+  .summary-list{list-style:none;margin:0 0 28px;padding:0;}
+  .summary-list li{
+    display:flex; align-items:baseline; gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14.5px;
+    color:var(--ink);
+  }
+  .summary-list li:last-child{border-bottom:none;}
+  .summary-list .mark{color:var(--teal); font-weight:700;}
+  .summary-list .muted{color:var(--ink-faint); font-size:13px;}
+
+  .fade{animation:fadeIn 0.35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  @media (prefers-reduced-motion: reduce){
+    .fade{animation:none;}
+    .road-line-fill{transition:none;}
+    button{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const ERAS = [
+  {
+    name: "Early Colonisation",
+    dates: "1788–1838",
+    context: "Aboriginal resistance campaigns led against European occupation of land. Survival despite massacres, martial law, disease, dispossession.",
+    questions: [],
+    examples: [
+      "Pride"
+    ]
+  },
+  {
+    name: "Protection & Segregation",
+    dates: "1839–1929",
+    context: "Survival despite marginalisation. Survival and continuity of many aspects of culture, spiritual beliefs, ceremonies and languages despite government attempts at prohibition. The Australian Aborigines' Progressive Association formed in 1925 to oppose the NSW Aborigines Protection Board.",
+    questions: [],
+    examples: [
+      "Unity against oppression"
+    ]
+  },
+  {
+    name: "Assimilation",
+    dates: "1930–1970",
+    context: "Known examples from this era include the 1938 Day of Mourning and Protest, and the 1965 Freedom Ride.",
+    questions: [
+      "What protests and other forms of activism occurred in your community during this period?",
+      "What groups, organisations, services, activities, and events were established?"
+    ],
+    examples: [
+      "Hope",
+      "Increased awareness of the power of protest"
+    ]
+  },
+  {
+    name: "Self-Determination",
+    dates: "1971–1990",
+    context: "In 1971, principals of schools in NSW could no longer exclude Aboriginal children because of home conditions or community opposition. In 1971, the first Aboriginal community-controlled health service was established by the local Aboriginal community in Redfern, to address the blatant discrimination experienced in mainstream services. In 1971, Neville Bonner was sworn in as Australia's first Aboriginal Senator. In 1972, the Aboriginal Tent Embassy was pitched outside Parliament House in Canberra, demonstrating for Land Rights.",
+    questions: [
+      "What gains were made in regard to education in your region?",
+      "What gains were made in regard to health services in your region?",
+      "What gains were made in regard to political representation in your region?",
+      "What gains were made in regard to land rights?",
+      "What groups, organisations, services, activities, and events were established?",
+      "What activities enable connectedness to culture, community, Country?"
+    ],
+    examples: [
+      "Increased sense of control over the future",
+      "Increased access to health services",
+      "Increased access to education",
+      "Establishment of further Aboriginal-specific services, groups, organisations",
+      "Establishment of local Aboriginal cultural events"
+    ]
+  },
+  {
+    name: "Reconciliation & The Intervention",
+    dates: "1991–2012",
+    context: "This era includes Native Title, the Close the Gap campaign, and the Apology.",
+    questions: [
+      "What gains were made in regard to services for health, employment, childcare, education?",
+      "What gains were made in regard to Aboriginal representation in the media, popular culture, sport and leisure in your community?",
+      "What groups, organisations, services, activities, and events were established?",
+      "Was there belated acknowledgement of Aboriginal and Torres Strait Islander participation in the armed services in your region?",
+      "What activities enable connectedness to culture, community, Country?"
+    ],
+    examples: [
+      "Unity against oppression",
+      "Increased participation in education, training and employment opportunities",
+      "Celebration of Aboriginal identity"
+    ]
+  },
+  {
+    name: "Voice. Treaty. Truth.",
+    dates: "Current day",
+    context: "",
+    questions: [
+      "What gains were made in regard to services for health, employment, childcare, education?",
+      "What groups, organisations, services, activities, and events were established?",
+      "What activities enable connectedness to culture, community, Country?"
+    ],
+    examples: [
+      "Gaining momentum in community to build capacity, gain justice, fight for rights"
+    ]
+  }
+];
+
+const state = {
+  screen: "intro", // intro | era | final
+  eraIndex: 0,
+  answers: ERAS.map(() => ({ impacts: "", effects: "" }))
+};
+
+const app = document.getElementById("app");
+
+function renderRoad(activeIndex){
+  const total = ERAS.length;
+  const pct = activeIndex <= 0 ? 0 : (activeIndex / (total - 1)) * 100;
+  let stops = "";
+  ERAS.forEach((era, i) => {
+    let cls = "stop";
+    if (i < activeIndex) cls += " done";
+    if (i === activeIndex) cls += " current";
+    stops += `<div style="position:relative;">
+      <div class="${cls}"></div>
+      <div class="stop-label">${era.dates.split("–")[0]}</div>
+    </div>`;
+  });
+  return `
+    <div class="road-wrap">
+      <div class="road-line"><div class="road-line-fill" style="width:${pct}%;"></div></div>
+      <div class="stops">${stops}</div>
+    </div>`;
+}
+
+function renderIntro(){
+  app.innerHTML = `
+    <div class="intro fade">
+      ${renderRoad(-1)}
+      <div class="eyebrow">Mapping Exercise 2</div>
+      <h1>Generational Achievements and Their Effects</h1>
+      <p>Just as it is important to acknowledge trauma and its effects, it's also important to acknowledge achievements and the effects these have had on community.</p>
+      <p>This activity asks you to plot significant Aboriginal and Torres Strait Islander achievements made in your local region, or that may have occurred across a wider region but impacted communities in your region.</p>
+      <div class="reassure">As with the previous activity, you may not know much about these achievements and may struggle to add any information. The point is that it starts you thinking about generational impacts, and their cumulative effects.</div>
+      <div class="nav-row" style="justify-content:flex-end;">
+        <button class="btn-primary" onclick="goToEra(0)">Begin →</button>
+      </div>
+    </div>`;
+}
+
+function renderEra(i){
+  const era = ERAS[i];
+  const a = state.answers[i];
+  app.innerHTML = `
+    <div class="era fade">
+      ${renderRoad(i)}
+      <div class="eyebrow">Part ${i+1} of ${ERAS.length}</div>
+      <h1 class="title">${era.name}</h1>
+      <div class="era-dates">${era.dates}</div>
+
+      <div class="card">
+        ${era.context ? `<p>${era.context}</p>` : ""}
+        ${era.questions.length ? `
+        <span class="label">Reflect on</span>
+        <ul class="reflect-list">
+          ${era.questions.map(q => `<li>${q}</li>`).join("")}
+        </ul>` : ""}
+      </div>
+
+      <div class="field">
+        <span class="label">Your reflection: generational achievements</span>
+        <textarea id="impacts-input" placeholder="What achievements do you know of in your region?">${a.impacts}</textarea>
+      </div>
+
+      <div class="examples-panel">
+        <span class="label">Effects on community: examples</span>
+        <ul>${era.examples.map(e => `<li>${e}</li>`).join("")}</ul>
+      </div>
+
+      <div class="field">
+        <span class="label">Your reflection: effects on community</span>
+        <textarea id="effects-input" placeholder="What effects have these achievements had on your community?">${a.effects}</textarea>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-ghost" ${i===0 ? "disabled" : ""} onclick="goBack()">← Back</button>
+        <button class="btn-primary" onclick="goNext()">${i === ERAS.length-1 ? "Finish →" : "Next →"}</button>
+      </div>
+    </div>`;
+}
+
+function renderFinal(){
+  app.innerHTML = `
+    <div class="final fade">
+      ${renderRoad(ERAS.length)}
+      <div class="eyebrow">Journey complete</div>
+      <h1>Thank you for completing this exercise.</h1>
+      <p>Here's what you've mapped so far. Download it as a PDF to keep, revisit, or bring to a conversation with your local Elders and community organisations, and remember, this is something you can keep adding to over time. Strength and survival sit alongside the harder history, both are part of the same story.</p>
+      <ul class="summary-list">
+        ${ERAS.map((era, i) => {
+          const a = state.answers[i];
+          const filled = a.impacts.trim() || a.effects.trim();
+          return `<li><span class="mark">${filled ? "✓" : "–"}</span> ${era.name} <span class="muted">(${era.dates})</span></li>`;
+        }).join("")}
+      </ul>
+      <div class="nav-row" style="justify-content:space-between;">
+        <button class="btn-ghost" onclick="goToEra(${ERAS.length - 1})">← Back to edit</button>
+        <button class="btn-primary" onclick="downloadPDF()">Download my reflections (PDF)</button>
+      </div>
+    </div>`;
+}
+
+function saveCurrentInputs(){
+  if (state.screen === "era"){
+    const impactsEl = document.getElementById("impacts-input");
+    const effectsEl = document.getElementById("effects-input");
+    if (impactsEl) state.answers[state.eraIndex].impacts = impactsEl.value;
+    if (effectsEl) state.answers[state.eraIndex].effects = effectsEl.value;
+  }
+}
+
+function goToEra(i){
+  saveCurrentInputs();
+  state.screen = "era";
+  state.eraIndex = i;
+  renderEra(i);
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function goNext(){
+  saveCurrentInputs();
+  if (state.eraIndex < ERAS.length - 1){
+    goToEra(state.eraIndex + 1);
+  } else {
+    state.screen = "final";
+    renderFinal();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+}
+
+function goBack(){
+  saveCurrentInputs();
+  if (state.eraIndex > 0) goToEra(state.eraIndex - 1);
+}
+
+function downloadPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const marginX = 48;
+  let y = 56;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = doc.internal.pageSize.getWidth() - marginX * 2;
+
+  function ensureSpace(lines){
+    if (y + lines * 14 > pageHeight - 48){
+      doc.addPage();
+      y = 56;
+    }
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Mapping Exercise 2: Generational Achievements and Their Effects", marginX, y);
+  y += 26;
+
+  ERAS.forEach((era, i) => {
+    const a = state.answers[i];
+    ensureSpace(3);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text(`${era.name} (${era.dates})`, marginX, y);
+    y += 18;
+
+    if (era.questions.length){
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      ensureSpace(1);
+      doc.text("Reflect on:", marginX, y);
+      y += 14;
+      doc.setFont("helvetica", "normal");
+      era.questions.forEach(q => {
+        const qLines = doc.splitTextToSize(`•  ${q}`, maxWidth);
+        ensureSpace(qLines.length);
+        doc.text(qLines, marginX, y);
+        y += qLines.length * 13 + 2;
+      });
+      y += 6;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    ensureSpace(1);
+    doc.text("Generational achievements: my reflection:", marginX, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    const impactsText = a.impacts.trim() || "(no response entered)";
+    const impactsLines = doc.splitTextToSize(impactsText, maxWidth);
+    ensureSpace(impactsLines.length);
+    doc.text(impactsLines, marginX, y);
+    y += impactsLines.length * 13 + 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    ensureSpace(1);
+    doc.text("Effects on community: my reflection:", marginX, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    const effectsText = a.effects.trim() || "(no response entered)";
+    const effectsLines = doc.splitTextToSize(effectsText, maxWidth);
+    ensureSpace(effectsLines.length);
+    doc.text(effectsLines, marginX, y);
+    y += effectsLines.length * 13 + 24;
+  });
+
+  doc.save("mapping-exercise-2-my-reflections.pdf");
+}
+
+renderIntro();
+</script>
+</body>
+</html>
